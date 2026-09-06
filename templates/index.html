@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Odczyt zegara analogowego</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-5" style="max-width: 720px;">
+    <h1 class="mb-4">Odczyt zegara analogowego</h1>
+
+    <div id="error-box" class="alert alert-danger d-none"></div>
+
+    <form id="upload-form" class="card p-4 mb-4">
+      <div class="mb-3">
+        <label class="form-label">Zdjecie zegara</label>
+        <input class="form-control" type="file" name="photo" id="photo-input" accept="image/*" required>
+      </div>
+      <button class="btn btn-primary" type="submit" id="submit-btn">
+        Wyslij
+      </button>
+    </form>
+
+    <div id="progress-box" class="card p-4 mb-4 d-none">
+      <div class="d-flex justify-content-between mb-2">
+        <span id="progress-message">Rozpoczynanie...</span>
+        <span id="progress-percent">0%</span>
+      </div>
+      <div class="progress" role="progressbar">
+        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div id="result-box" class="card p-4 mb-4 d-none">
+      <h2 class="h4 mb-3">Godzina: <span class="text-primary" id="result-time"></span></h2>
+      <img id="result-image" class="img-fluid rounded" alt="wynik odczytu">
+    </div>
+
+    <div class="card p-4">
+      <h2 class="h5 mb-3">Jak zrobić dobre zdjęcie zegara</h2>
+      <div class="row g-3">
+        <div class="col-6">
+          <img src="https://placehold.co/300x200?text=DO%3A+na+wprost" class="img-fluid rounded mb-1" alt="dobrze - na wprost">
+          <p class="small mb-0"><strong class="text-success">DO:</strong> zdjęcie zrobione prostopadle do tarczy</p>
+        </div>
+        <div class="col-6">
+          <img src="https://placehold.co/300x200?text=DO%3A+dobre+swiatlo" class="img-fluid rounded mb-1" alt="dobrze - dobre oswietlenie">
+          <p class="small mb-0"><strong class="text-success">DO:</strong> równomierne oświetlenie, ostre zdjęcie</p>
+        </div>
+        <div class="col-6">
+          <img src="https://placehold.co/300x200?text=DON%27T%3A+pod+katem" class="img-fluid rounded mb-1" alt="zle - pod katem">
+          <p class="small mb-0"><strong class="text-danger">DON'T:</strong> zdjęcie zrobione pod kątem / skosem</p>
+        </div>
+        <div class="col-6">
+          <img src="https://placehold.co/300x200?text=DON%27T%3A+odblaski" class="img-fluid rounded mb-1" alt="zle - odblaski i cienie">
+          <p class="small mb-0"><strong class="text-danger">DON'T:</strong> odblaski szkła i cienie na tarczy</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("upload-form");
+    const submitBtn = document.getElementById("submit-btn");
+    const errorBox = document.getElementById("error-box");
+    const progressBox = document.getElementById("progress-box");
+    const progressBar = document.getElementById("progress-bar");
+    const progressMessage = document.getElementById("progress-message");
+    const progressPercent = document.getElementById("progress-percent");
+    const resultBox = document.getElementById("result-box");
+    const resultTime = document.getElementById("result-time");
+    const resultImage = document.getElementById("result-image");
+
+    const FAKE_STEPS = [
+      [5, "Wykrywanie tarczy zegara..."],
+      [15, "Przycinanie i powiększanie obrazu..."],
+      [25, "Rozpoznawanie cyfr na tarczy..."],
+      [35, "Znaleziono pierwszą cyfrę..."],
+      [42, "Znaleziono drugą cyfrę..."],
+      [50, "Wyznaczanie środka tarczy..."],
+      [58, "Szukanie wskazówek..."],
+      [66, "Analiza maski wskazówek..."],
+      [74, "Mierzenie długości wskazówek..."],
+      [82, "Obliczanie godziny..."],
+      [90, "Rysowanie wizualizacji..."],
+      [99, "Już prawie gotowe..."],
+    ];
+    const FAKE_TOTAL_DURATION_MS = 60000;
+
+    let fakeTimer = null;
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.classList.remove("d-none");
+    }
+
+    function resetUi() {
+      errorBox.classList.add("d-none");
+      resultBox.classList.add("d-none");
+      progressBox.classList.remove("d-none");
+      progressBar.style.width = "0%";
+      progressMessage.textContent = "Rozpoczynanie...";
+      progressPercent.textContent = "0%";
+    }
+
+    function setProgress(percent, message) {
+      progressBar.style.width = percent + "%";
+      progressPercent.textContent = percent + "%";
+      progressMessage.textContent = message;
+    }
+
+    function startFakeProgress() {
+      let i = 0;
+      const stepDelay = FAKE_TOTAL_DURATION_MS / FAKE_STEPS.length;
+      setProgress(0, "Rozpoczynanie...");
+      fakeTimer = setInterval(() => {
+        if (i >= FAKE_STEPS.length) {
+          clearInterval(fakeTimer);
+          return;
+        }
+        const [percent, message] = FAKE_STEPS[i];
+        setProgress(percent, message);
+        i += 1;
+      }, stepDelay);
+    }
+
+    function stopFakeProgress() {
+      if (fakeTimer) {
+        clearInterval(fakeTimer);
+        fakeTimer = null;
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById("photo-input");
+      if (!fileInput.files.length) {
+        showError("Nie wybrano zdjecia.");
+        return;
+      }
+
+      resetUi();
+      submitBtn.setAttribute("disabled", "disabled");
+      startFakeProgress();
+
+      const formData = new FormData();
+      formData.append("photo", fileInput.files[0]);
+
+      try {
+        const res = await fetch("/upload", { method: "POST", body: formData });
+        const data = await res.json();
+
+        stopFakeProgress();
+        submitBtn.removeAttribute("disabled");
+
+        if (!res.ok || data.error) {
+          progressBox.classList.add("d-none");
+          showError(data.error || "Wystapil blad.");
+          return;
+        }
+
+        setProgress(100, "Gotowe");
+        setTimeout(() => {
+          progressBox.classList.add("d-none");
+          resultTime.textContent = data.result_time;
+          resultImage.src = "data:image/png;base64," + data.result_image;
+          resultBox.classList.remove("d-none");
+        }, 300);
+      } catch (err) {
+        stopFakeProgress();
+        progressBox.classList.add("d-none");
+        showError("Blad polaczenia podczas wysylania zdjecia.");
+        submitBtn.removeAttribute("disabled");
+      }
+    });
+  </script>
+</body>
+</html>
