@@ -29,10 +29,10 @@ Przetwarzanie pojedynczego zdjęcia przebiega w kilku etapach (`clock_reader.py`
    lokalizuje tarczę zegara na zdjęciu i zwraca jej bounding box.
 2. **Przycięcie i powiększenie** - wykryty obszar tarczy jest wycinany
    i skalowany (interpolacja bikubiczna), aby ułatwić dalsze etapy.
-3. **OCR cyfr na tarczy** - EasyOCR odczytuje cyfry 1–12 wraz z ich
+3. **OCR cyfr na tarczy** - EasyOCR odczytuje cyfry 1-12 wraz z ich
    położeniem i pewnością odczytu (próg ufności konfigurowalny).
 4. **Wyznaczenie środka tarczy** - środek liczony jako mediana punktów
-   przecięcia linii łączących przeciwległe cyfry (1–7, 2–8, 3–9, itd.).
+   przecięcia linii łączących przeciwległe cyfry (1-7, 2-8, 3-9, itd.).
 5. **Maskowanie wskazówek** - segmentacja binarna oparta o próg Otsu
    w obszarze tarczy, z iteracyjnie zmienianą "siłą" progowania, dopóki nie
    uda się wyodrębnić dwóch odrębnych wskazówek.
